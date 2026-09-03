@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Golf Scorecard">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1f6f3e">
+<title>Golf Scorecard</title>
+<style>
+  :root{
+    --green: #1f6f3e;
+    --green-dark: #144a29;
+    --bg: #f4f6f2;
+    --card: #ffffff;
+    --text: #1a2a1f;
+    --muted: #6b7a6f;
+    --border: #dfe6dc;
+    --blue: #2c6ea6;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px 16px 60px;
+  }
+  h1{ font-size: 22px; margin: 4px 0 2px; color: var(--green-dark); }
+  .sub{ color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .card{
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid var(--border);
+  }
+  label{ display:block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; font-weight: 600; }
+  input, select{
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #fafcf9;
+    color: var(--text);
+  }
+  button{
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    background: var(--green);
+    color: white;
+  }
+  button.wfull{ width:100%; margin-top: 14px; }
+  button.danger{
+    background: transparent;
+    color: #b23c3c;
+    border: 1px solid #e3b8b8;
+  }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top: 8px; }
+  .chip{
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: #fafcf9;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .chip.active{ background: var(--green); color: white; border-color: var(--green); }
+  .chip.small{ padding: 6px 0; width: 38px; text-align:center; }
+
+  .hole-card{ border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .hole-head{ display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .hole-head .num{ font-size: 17px; font-weight: 800; color: var(--green-dark); }
+  .hole-head .meta{ font-size: 12px; color: var(--muted); }
+  .stepper-row{ display:flex; align-items:center; justify-content: space-between; margin-top: 6px; }
+  .stepper-label{ font-size: 13px; font-weight: 600; color: var(--muted); width: 70px; }
+  .stepper{ display:flex; align-items:center; gap: 10px; }
+  .stepper button{
+    width: 38px; height: 38px; padding:0;
+    font-size: 20px; line-height: 1;
+    border-radius: 10px;
+    background: #eef3ec;
+    color: var(--green-dark);
+    font-weight: 800;
+  }
+  .stepper button:active{ background: #d9e6d3; }
+  .stepper .val{ width: 34px; text-align:center; font-size: 18px; font-weight: 800; }
+
+  .totals{
+    position: sticky; bottom: 8px; display:flex; gap: 8px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px; margin: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .totals > div{ flex:1; text-align:center; }
+  .totals .num{ font-size: 18px; font-weight: 800; color: var(--green-dark); }
+  .totals .lbl{ font-size: 10px; color: var(--muted); }
+
+  .stats{ display:flex; gap: 10px; margin-bottom: 16px; }
+  .stat{ flex:1; background: var(--card); border-radius: 14px; padding: 12px; text-align:center; border: 1px solid var(--border); }
+  .stat .num{ font-size: 20px; font-weight: 800; color: var(--green-dark); }
+  .stat .lbl{ font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+
+  canvas{ width: 100%; height: 130px; display:block; }
+  .chart-title{ font-size: 13px; font-weight: 700; color: var(--green-dark); margin-bottom: 6px; }
+
+  table{ width:100%; border-collapse: collapse; font-size: 13px; }
+  th, td{ padding: 7px 4px; text-align: left; border-bottom: 1px solid var(--border); }
+  th{ color: var(--muted); font-weight: 600; }
+  .diff-pos{ color: #b23c3c; font-weight:700; }
+  .diff-neg{ color: var(--green); font-weight:700; }
+  .del{ color: #b23c3c; font-size: 16px; background:none; border:none; padding: 2px 6px; }
+  .empty{ color: var(--muted); font-size: 13px; text-align:center; padding: 12px 0; }
+  details summary{ cursor:pointer; font-weight:600; list-style:none; }
+  details summary::-webkit-details-marker{ display:none; }
+  .mini-table{ margin-top:8px; }
+</style>
+</head>
+<body>
+
+<h1>⛳ Golf Scorecard</h1>
+<div class="sub">GC Emstal · Schläge &amp; Putts pro Loch</div>
+
+<div id="app"></div>
+
+<div class="stats">
+  <div class="stat"><div class="num" id="statRounds">0</div><div class="lbl">Runden erfasst</div></div>
+  <div class="stat"><div class="num" id="statScorePerHole">–</div><div class="lbl">Ø Schläge / Loch</div></div>
+  <div class="stat"><div class="num" id="statPuttsPerHole">–</div><div class="lbl">Ø Putts / Loch</div></div>
+</div>
+
+<div class="card">
+  <div class="chart-title">Schläge pro Loch – Verlauf</div>
+  <canvas id="chartScore"></canvas>
+</div>
+
+<div class="card">
+  <div class="chart-title">Putts pro Loch – Verlauf</div>
+  <canvas id="chartPutts"></canvas>
+</div>
+
+<div class="card">
+  <div class="chart-title" style="margin-bottom:10px;">Rundenhistorie</div>
+  <div id="tableWrap"></div>
+</div>
+
+<script>
+const HISTORY_KEY = 'golfRoundsEmstal_v2';
+const DRAFT_KEY = 'golfDraftEmstal_v2';
+
+const COURSE = {
+  1:{par:5,hcp:5}, 2:{par:3,hcp:17}, 3:{par:4,hcp:3}, 4:{par:4,hcp:13},
+  5:{par:3,hcp:11}, 6:{par:5,hcp:9}, 7:{par:4,hcp:7}, 8:{par:4,hcp:1},
+  9:{par:4,hcp:15}, 10:{par:3,hcp:14}, 11:{par:5,hcp:2}, 12:{par:4,hcp:12},
+  13:{par:4,hcp:6}, 14:{par:4,hcp:10}, 15:{par:4,hcp:16}, 16:{par:5,hcp:8},
+  17:{par:4,hcp:4}, 18:{par:3,hcp:18}
+};
+
+function loadJSON(key, fallback){
+  try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch(e){ console.error(e); return fallback; }
+}
+function saveJSON(key, val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); }
+  catch(e){ console.error(e); alert('Speichern fehlgeschlagen.'); }
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+let setupSelection = [1,2,3,4,5,6,7,8,9];
+
+function getDraft(){ return loadJSON(DRAFT_KEY, null); }
+function setDraft(d){ saveJSON(DRAFT_KEY, d); }
+
+function startRound(){
+  const date = document.getElementById('inDate').value || todayStr();
+  const platz = document.getElementById('inPlatz').value.trim() || 'GC Emstal';
+  const tee = document.getElementById('inTee').value;
+  const holes = setupSelection.slice().sort((a,b)=>a-b).map(h => ({
+    hole: h, par: COURSE[h].par, hcp: COURSE[h].hcp, strokes: COURSE[h].par, putts: 2
+  }));
+  if(holes.length === 0){ alert('Bitte mindestens ein Loch auswählen.'); return; }
+  setDraft({ date, platz, tee, holes });
+  renderApp();
+}
+
+function discardDraft(){
+  if(!confirm('Aktuelle Runde verwerfen?')) return;
+  localStorage.removeItem(DRAFT_KEY);
+  renderApp();
+}
+
+function adjust(holeNum, field, delta){
+  const draft = getDraft();
+  const h = draft.holes.find(x => x.hole === holeNum);
+  let v = h[field] + delta;
+  if(field === 'strokes') v = Math.max(1, v);
+  if(field === 'putts') v = Math.max(0, v);
+  h[field] = v;
+  setDraft(draft);
+  renderApp();
+}
+
+function finalizeRound(){
+  const draft = getDraft();
+  const totalScore = draft.holes.reduce((s,h)=>s+h.strokes,0);
+  const totalPutts = draft.holes.reduce((s,h)=>s+h.putts,0);
+  const totalPar = draft.holes.reduce((s,h)=>s+h.par,0);
+  const history = loadJSON(HISTORY_KEY, []);
+  history.push({
+    id: Date.now(), date: draft.date, platz: draft.platz, tee: draft.tee,
+    holesPlayed: draft.holes.length, totalScore, totalPutts, totalPar, detail: draft.holes
+  });
+  saveJSON(HISTORY_KEY, history);
+  localStorage.removeItem(DRAFT_KEY);
+  renderApp();
+}
+
+function deleteRound(id){
+  if(!confirm('Diese Runde wirklich löschen?')) return;
+  let history = loadJSON(HISTORY_KEY, []);
+  history = history.filter(r => r.id !== id);
+  saveJSON(HISTORY_KEY, history);
+  renderApp();
+}
+
+function toggleHole(h){
+  const idx = setupSelection.indexOf(h);
+  if(idx >= 0) setupSelection.splice(idx,1); else setupSelection.push(h);
+  renderSetupChips();
+}
+
+function setPreset(preset){
+  if(preset === 'front') setupSelection = [1,2,3,4,5,6,7,8,9];
+  if(preset === 'back') setupSelection = [10,11,12,13,14,15,16,17,18];
+  if(preset === '18') setupSelection = Array.from({length:18}, (_,i)=>i+1);
+  renderSetupChips();
+}
+
+function renderSetupChips(){
+  const wrap = document.getElementById('holeChips');
+  if(!wrap) return;
+  let html = '';
+  for(let h=1; h<=18; h++){
+    const active = setupSelection.includes(h);
+    html += `<div class="chip small ${active?'active':''}" onclick="toggleHole(${h})">${h}</div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+function renderSetup(){
+  return `
+    <div class="card">
+      <label for="inDate">Datum</label>
+      <input type="date" id="inDate" value="${todayStr()}">
+      <label for="inPlatz">Platz</label>
+      <input type="text" id="inPlatz" value="GC Emstal">
+      <label for="inTee">Abschlag</label>
+      <select id="inTee">
+        <option value="Blau" selected>Blau</option>
+        <option value="Gelb">Gelb</option>
+        <option value="Rot">Rot</option>
+        <option value="Orange">Orange</option>
+      </select>
+
+      <label>Löcher auswählen</label>
+      <div class="chips">
+        <div class="chip" onclick="setPreset('front')">Front 9 (1–9)</div>
+        <div class="chip" onclick="setPreset('back')">Back 9 (10–18)</div>
+        <div class="chip" onclick="setPreset('18')">18 Loch komplett</div>
+      </div>
+      <div class="chips" id="holeChips" style="margin-top:12px;"></div>
+
+      <button class="wfull" onclick="startRound()">Runde starten</button>
+    </div>
+  `;
+}
+
+function renderScorecard(draft){
+  const totalScore = draft.holes.reduce((s,h)=>s+h.strokes,0);
+  const totalPutts = draft.holes.reduce((s,h)=>s+h.putts,0);
+  const totalPar = draft.holes.reduce((s,h)=>s+h.par,0);
+  const diff = totalScore - totalPar;
+  const diffStr = diff === 0 ? 'E' : (diff > 0 ? '+'+diff : diff);
+
+  let holesHtml = '';
+  draft.holes.forEach(h => {
+    holesHtml += `
+      <div class="hole-card">
+        <div class="hole-head">
+          <div class="num">Loch ${h.hole}</div>
+          <div class="meta">Par ${h.par} · Hcp ${h.hcp}</div>
+        </div>
+        <div class="stepper-row">
+          <div class="stepper-label">Schläge</div>
+          <div class="stepper">
+            <button onclick="adjust(${h.hole},'strokes',-1)">−</button>
+            <div class="val">${h.strokes}</div>
+            <button onclick="adjust(${h.hole},'strokes',1)">+</button>
+          </div>
+        </div>
+        <div class="stepper-row">
+          <div class="stepper-label">Putts</div>
+          <div class="stepper">
+            <button onclick="adjust(${h.hole},'putts',-1)">−</button>
+            <div class="val">${h.putts}</div>
+            <button onclick="adjust(${h.hole},'putts',1)">+</button>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  return `
+    <div class="card">
+      <div class="sub" style="margin-bottom:10px;">${draft.date} · ${draft.platz} · Abschlag ${draft.tee}</div>
+      ${holesHtml}
+      <div class="totals">
+        <div><div class="num">${totalScore}</div><div class="lbl">SCORE</div></div>
+        <div><div class="num">${diffStr}</div><div class="lbl">ZU PAR</div></div>
+        <div><div class="num">${totalPutts}</div><div class="lbl">PUTTS</div></div>
+      </div>
+      <button class="wfull" onclick="finalizeRound()">Runde speichern</button>
+      <button class="wfull danger" style="margin-top:8px;" onclick="discardDraft()">Runde verwerfen</button>
+    </div>
+  `;
+}
+
+function drawLineChart(canvas, values, color){
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  if(values.length === 0){
+    ctx.fillStyle = '#9aa79c'; ctx.font = '13px sans-serif';
+    ctx.fillText('Noch keine Daten', 10, h/2);
+    return;
+  }
+  const pad = 20;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = (max - min) || 1;
+
+  ctx.strokeStyle = '#e3e9df'; ctx.lineWidth = 1;
+  for(let i=0;i<=3;i++){
+    const y = pad + (h - pad*2) * (i/3);
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.beginPath();
+  values.forEach((v,i)=>{
+    const x = values.length===1 ? w/2 : pad + (w-pad*2)*(i/(values.length-1));
+    const y = h - pad - (h-pad*2)*((v-min)/range);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  ctx.fillStyle = color;
+  values.forEach((v,i)=>{
+    const x = values.length===1 ? w/2 : pad + (w-pad*2)*(i/(values.length-1));
+    const y = h - pad - (h-pad*2)*((v-min)/range);
+    ctx.beginPath(); ctx.arc(x,y,3.5,0,Math.PI*2); ctx.fill();
+  });
+}
+
+function renderStatsAndHistory(){
+  const history = loadJSON(HISTORY_KEY, []).slice().sort((a,b)=> a.date.localeCompare(b.date) || a.id-b.id);
+
+  document.getElementById('statRounds').textContent = history.length;
+  if(history.length > 0){
+    const sumStrokes = history.reduce((s,r)=>s+r.totalScore,0);
+    const sumPutts = history.reduce((s,r)=>s+r.totalPutts,0);
+    const sumHoles = history.reduce((s,r)=>s+r.holesPlayed,0);
+    document.getElementById('statScorePerHole').textContent = (sumStrokes/sumHoles).toFixed(2);
+    document.getElementById('statPuttsPerHole').textContent = (sumPutts/sumHoles).toFixed(2);
+  } else {
+    document.getElementById('statScorePerHole').textContent = '–';
+    document.getElementById('statPuttsPerHole').textContent = '–';
+  }
+
+  drawLineChart(document.getElementById('chartScore'), history.map(r=>r.totalScore/r.holesPlayed), '#1f6f3e');
+  drawLineChart(document.getElementById('chartPutts'), history.map(r=>r.totalPutts/r.holesPlayed), '#2c6ea6');
+
+  const wrap = document.getElementById('tableWrap');
+  const desc = history.slice().sort((a,b)=> b.date.localeCompare(a.date) || b.id-a.id);
+  if(desc.length === 0){
+    wrap.innerHTML = '<div class="empty">Noch keine Runden erfasst.</div>';
+    return;
+  }
+  let html = '';
+  desc.forEach(r => {
+    const diff = r.totalScore - r.totalPar;
+    const diffStr = diff === 0 ? 'E' : (diff > 0 ? '+'+diff : diff);
+    const diffClass = diff > 0 ? 'diff-pos' : (diff < 0 ? 'diff-neg' : '');
+    let miniRows = '';
+    r.detail.forEach(h => {
+      const d = h.strokes - h.par;
+      const dStr = d === 0 ? 'E' : (d > 0 ? '+'+d : d);
+      miniRows += `<tr><td>Loch ${h.hole}</td><td>Par ${h.par}</td><td>${h.strokes} (${dStr})</td><td>${h.putts} Putts</td></tr>`;
+    });
+    html += `
+      <details>
+        <summary>
+          <table style="margin-bottom:4px;">
+            <tr>
+              <td style="width:26%">${r.date}</td>
+              <td style="width:16%">${r.holesPlayed} Loch</td>
+              <td style="width:20%">Score ${r.totalScore} <span class="${diffClass}">(${diffStr})</span></td>
+              <td style="width:18%">${r.totalPutts} Putts</td>
+              <td style="width:10%"><button class="del" onclick="event.preventDefault(); event.stopPropagation(); deleteRound(${r.id})">✕</button></td>
+            </tr>
+          </table>
+        </summary>
+        <table class="mini-table">${miniRows}</table>
+      </details>
+    `;
+  });
+  wrap.innerHTML = html;
+}
+
+function renderApp(){
+  const draft = getDraft();
+  const app = document.getElementById('app');
+  if(draft){
+    app.innerHTML = renderScorecard(draft);
+  } else {
+    app.innerHTML = renderSetup();
+    renderSetupChips();
+  }
+  renderStatsAndHistory();
+}
+
+window.addEventListener('resize', renderStatsAndHistory);
+renderApp();
+</script>
+
+</body>
+</html>
